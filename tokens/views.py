@@ -12,6 +12,7 @@ from .utils import get_user_from_token
 User = get_user_model()
 
 class AddTokenView(APIView):
+    authentication_classes = [JWTAuthentication]
     permission_classes = [IsAuthenticated]
 
     def post(self, request, *args, **kwargs):

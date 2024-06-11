@@ -12,7 +12,7 @@ class TokenSerializer(serializers.ModelSerializer):
         fields = ['name', 'symbol', 'quote', 'last_updated']
 
 class AddTokenSerializer(serializers.ModelSerializer):
-    quantity = serializers.DecimalField(max_digits=20, decimal_places=10, default=0)
+    quantity = serializers.DecimalField(max_digits=20, decimal_places=10, required=True)
 
     class Meta:
         model = Token
@@ -25,7 +25,7 @@ class AddTokenSerializer(serializers.ModelSerializer):
         return value
 
     def create(self, validated_data):
-        quantity = validated_data.pop('quantity', 0)
+        quantity = validated_data.pop('quantity')
         token_id = validated_data['token_id']
 
         token_data = fetch_token_data([token_id])
