@@ -3,7 +3,6 @@ from django.contrib.auth import get_user_model
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from .models import Token, UserToken
-from .utils import fetch_token_data
 from rest_framework import status
 from .serializers import AddTokenSerializer, TokenSerializer
 from rest_framework.permissions import IsAuthenticated
@@ -35,12 +34,11 @@ class TokenView(APIView):
             tokens = Token.objects.filter(symbol__iexact=symbol)
         else:
             tokens = Token.objects.all()
-            serializer = TokenSerializer(tokens, many=True)
+        serializer = TokenSerializer(tokens, many=True)
         return Response(serializer.data)
 
 class CryptoInfoView(APIView):
     def get(self, request, *args, **kwargs):
-        tokens_data = fetch_token_data()
-        if tokens_data:
-            return Response(tokens_data, status=status.HTTP_200_OK)
-        return Response({"error": "Failed to fetch token data"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        tokens = Token.objects.all()
+        serializer = TokenSerializer(tokens, many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)

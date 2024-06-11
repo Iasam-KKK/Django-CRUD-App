@@ -1,17 +1,21 @@
+# updater.py
 from apscheduler.schedulers.background import BackgroundScheduler
 from django.utils import timezone
 from .utils import fetch_token_data
 from .models import UserToken
-from .models import Token
 
 def update_token_data():
     try:
         print(f"\n[{timezone.now()}] Cron job running: update_token_data")
-        tokens_data = fetch_token_data()
-        if tokens_data:
-            print(f"Fetched and updated {len(tokens_data)} tokens in the database.")
+        user_tokens = UserToken.objects.values_list('token__token_id', flat=True).distinct()
+        if user_tokens:
+            tokens_data = fetch_token_data(user_tokens)
+            if tokens_data:
+                print(f"Fetched and updated {len(tokens_data)} tokens in the database.")
+            else:
+                print("Failed to fetch token data.")
         else:
-            print("Failed to fetch token data.")
+            print("No user-added tokens to update.")
 
         # Update user last_online
         updated = UserToken.objects.update(last_online=timezone.now())

@@ -1,11 +1,15 @@
-from datetime import timezone
+# serializers.py
+from datetime import datetime
 from rest_framework import serializers
 from .models import Token, UserToken
+from .utils import fetch_token_data
 
 class TokenSerializer(serializers.ModelSerializer):
+    quote = serializers.JSONField(required=False)
+
     class Meta:
         model = Token
-        fields = ['name', 'symbol', 'price', 'volume_24h', 'volume_change_24h', 'percent_change_1h', 'percent_change_24h', 'percent_change_7d', 'market_cap', 'market_cap_dominance', 'fully_diluted_market_cap', 'last_updated']
+        fields = ['name', 'symbol', 'quote', 'last_updated']
 
 class AddTokenSerializer(serializers.ModelSerializer):
     quantity = serializers.DecimalField(max_digits=20, decimal_places=10, default=0)
@@ -14,25 +18,25 @@ class AddTokenSerializer(serializers.ModelSerializer):
         model = Token
         fields = ['token_id', 'name', 'symbol', 'quantity']
 
+    def validate_token_id(self, value):
+        token_data = fetch_token_data([value])
+        if not token_data:
+            raise serializers.ValidationError(f"Token with ID {value} not found in the CoinMarketCap API response.")
+        return value
+
     def create(self, validated_data):
         quantity = validated_data.pop('quantity', 0)
+        token_id = validated_data['token_id']
+
+        token_data = fetch_token_data([token_id])
+        token_data = token_data.get(str(token_id))
         token, created = Token.objects.update_or_create(
-            token_id=validated_data['token_id'],
+            token_id=token_id,
             defaults={
-                'name': validated_data['name'],
-                'symbol': validated_data['symbol'],
-                'price': 0,
-                'volume_24h': 0,
-                'volume_change_24h': 0,
-                'percent_change_1h': 0,
-                'percent_change_24h': 0,
-                'percent_change_7d': 0,
-                'market_cap': 0,
-                'market_cap_dominance': 0,
-                'fully_diluted_market_cap': 0,
+                'name': token_data['name'],
+                'symbol': token_data['symbol'],
+                'quote': token_data.get('quote', {}),
+                'last_updated': datetime.strptime(token_data['last_updated'], '%Y-%m-%dT%H:%M:%S.%fZ'),
             }
         )
         return token, quantity
-
-         
-        
