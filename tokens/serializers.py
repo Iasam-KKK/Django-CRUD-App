@@ -12,7 +12,7 @@ class TokenSerializer(serializers.ModelSerializer):
         fields = ['name', 'symbol', 'quote', 'last_updated']
 
 class AddTokenSerializer(serializers.ModelSerializer):
-    quantity = serializers.DecimalField(max_digits=20, decimal_places=10, required=True)
+    quantity = serializers.DecimalField(max_digits=20, decimal_places=10, write_only=True, required=True)
 
     class Meta:
         model = Token
